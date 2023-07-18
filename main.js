@@ -1,8 +1,33 @@
+const fs = require('fs');
+
 class ProductManager {
 
     constructor() {
-        this.products = []; //Array vacio de productos
-        this.prodId = 1; //Para generar el ID autoincremental
+        this.path = 'Products.json';
+
+        if (fs.existsSync(this.path)) {
+
+            const fileContent = fs.readFileSync(this.path, "utf-8");
+            this.products = JSON.parse(fileContent);
+
+        } else {
+            this.products = [];
+        }
+
+        this.prodId = this.products.length === 0 ? 1 : this.products.reduce((max, item) => {
+            if (item && item.id > max) {
+                return item.id;
+            } else {
+                return max;
+            }
+        }, 0) + 1; //Para generar el ID autoincremental
+
+    }
+
+    createFile() {
+        if (!existsSync(this.path)) {
+            fs.writeFileSync(this.path, JSON.stringify(this.products))
+        }
     }
 
     addProduct(title, description, price, thumbnail, code, stock) {
@@ -39,6 +64,8 @@ class ProductManager {
 
                 this.products.push(product);
                 this.prodId++;
+                fs.writeFileSync(this.path, JSON.stringify(this.products));
+                console.log('Producto agregado satisfactoriamente');
 
             }
         }
@@ -46,7 +73,18 @@ class ProductManager {
     }
 
     getProducts() {
-        console.log(this.products);
+        try {
+            const fileContent = fs.readFileSync(this.path, "utf-8");
+            if (!fileContent) {
+                console.error("El archivo esta vacio.");
+                return [];
+            }
+
+            this.products = JSON.parse(fileContent);
+        } catch (err) {
+            console.error("Error al leer o parsear el archivo:", err.message);
+            this.products = [];
+        }
     }
 
     getProductById(id) {
@@ -65,11 +103,39 @@ class ProductManager {
         }
 
     }
+
+    updateProduct(id, title, description, price, thumbnail, code, stock) {
+
+        let position = this.products.findIndex(item => item.id === id);
+
+        this.products[position].title = title;
+        this.products[position].description = description;
+        this.products[position].price = price;
+        this.products[position].thumbnail = thumbnail;
+        this.products[position].code = code;
+        this.products[position].stock = stock;
+
+        fs.writeFileSync(this.path, JSON.stringify(this.products));
+
+    }
+
+    deleteProduct(id) {
+
+        let position = this.products.findIndex((product) => product.id === id);
+
+        if (position !== -1) {
+            this.products.splice(position, 1);
+            fs.writeFileSync(this.path, JSON.stringify(this.products));
+            console.log('Producto eliminado satisfactoriamente');
+        } else {
+            console.log('Producto no encontrado');
+        }
+    }
 }
 
 
 //Tests de primer entrega
-
+/*
 let prodManager = new ProductManager();
 
 prodManager.getProducts();// Devuelvo vacio
@@ -85,3 +151,22 @@ prodManager.addProduct('producto prueba', 'Este es un producto prueba', 200, 'Si
 prodManager.getProducts(); // Devuelve 2 productos
 
 prodManager.getProductById(1); //Devuelve el producto de ID 1
+*/
+//Test de segunda entrega
+
+let prodM = new ProductManager();
+
+prodM.getProducts(); //Devuelve vacio
+
+prodM.addProduct('producto prueba', 'Este es un producto prueba', 200, 'Sin imagen', 'abc123', 25);
+
+prodM.getProducts(); // Devuelve 1 producto
+
+prodM.getProductById(1); // Devuelve 1 producto
+
+prodM.getProductById(2); //Arroja error
+
+prodM.updateProduct(1, 'producto prueba', 'Este es un producto prueba', 300, 'Sin imagen', 'ab23', 55)
+
+prodM.deleteProduct(1); //Borra el producto con ID 1
+prodM.deleteProduct(44); //Arroja error
