@@ -1,9 +1,10 @@
 const fs = require('fs');
+const path = require('path');
 
 class ProductManager {
 
     constructor() {
-        this.path = 'Products.json';
+        this.path = path.resolve(__dirname, '..', 'Products.json');
 
         if (fs.existsSync(this.path)) {
 
@@ -72,18 +73,27 @@ class ProductManager {
 
     }
 
-    getProducts() {
+    async getProducts(limit) {
         try {
             const fileContent = fs.readFileSync(this.path, "utf-8");
             if (!fileContent) {
-                console.error("El archivo esta vacio.");
+                console.error("El archivo está vacío.");
                 return [];
             }
 
             this.products = JSON.parse(fileContent);
+
+            // Si se provee Limit
+            if (limit && Number.isInteger(Number(limit)) && Number(limit) > 0) {
+                return this.products.slice(0, Number(limit));
+            }
+
+            return this.products;
+
         } catch (err) {
             console.error("Error al leer o parsear el archivo:", err.message);
             this.products = [];
+            return [];
         }
     }
 
@@ -94,6 +104,7 @@ class ProductManager {
         if (product) {
 
             console.log(product);
+            return product;
 
         } else {
 
@@ -108,15 +119,21 @@ class ProductManager {
 
         let position = this.products.findIndex(item => item.id === id);
 
-        this.products[position].title = title;
-        this.products[position].description = description;
-        this.products[position].price = price;
-        this.products[position].thumbnail = thumbnail;
-        this.products[position].code = code;
-        this.products[position].stock = stock;
+        if (position !== -1) {
 
-        fs.writeFileSync(this.path, JSON.stringify(this.products));
+            this.products[position].title = title;
+            this.products[position].description = description;
+            this.products[position].price = price;
+            this.products[position].thumbnail = thumbnail;
+            this.products[position].code = code;
+            this.products[position].stock = stock;
 
+            fs.writeFileSync(this.path, JSON.stringify(this.products));
+
+        } else {
+
+            console.log('Producto no encontrado');
+        }
     }
 
     deleteProduct(id) {
@@ -133,7 +150,7 @@ class ProductManager {
     }
 }
 
-
+module.exports = ProductManager;
 //Tests de primer entrega
 /*
 let prodManager = new ProductManager();
@@ -153,12 +170,12 @@ prodManager.getProducts(); // Devuelve 2 productos
 prodManager.getProductById(1); //Devuelve el producto de ID 1
 */
 //Test de segunda entrega
-
+/*
 let prodM = new ProductManager();
 
 prodM.getProducts(); //Devuelve vacio
 
-prodM.addProduct('producto prueba', 'Este es un producto prueba', 200, 'Sin imagen', 'abc123', 25);
+prodM.addProduct('producto prueba', 'Este es un producto prueba', 200, 'Sin imagen', 'zzz123', 25);
 
 prodM.getProducts(); // Devuelve 1 producto
 
@@ -170,3 +187,4 @@ prodM.updateProduct(1, 'producto prueba', 'Este es un producto prueba', 300, 'Si
 
 prodM.deleteProduct(1); //Borra el producto con ID 1
 prodM.deleteProduct(44); //Arroja error
+*/
